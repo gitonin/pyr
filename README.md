@@ -14,6 +14,9 @@ Three levels, each adding one sense:
 | 2 | Interference | gyroscope + touch | Artifacts fall toward the glass; tap them away, on the beat, without losing the axis. |
 | 3 | Breath | gyroscope + microphone | The scene starts blind. Blow to clear the mist — while still holding steady. |
 
+**▶ Play it: https://gitonin.github.io/pyr/** — served over HTTPS, so the
+gyroscope, the microphone and installing it to the home screen all work.
+
 <p align="center">
   <img src="docs/screen-intro.png" width="240" alt="Title screen">
   <img src="docs/screen-level2.png" width="240" alt="Level 2">
@@ -97,6 +100,14 @@ The game detects a non-touch device and shows the desktop hints automatically.
 The touch fallback is also what a phone without a usable gyroscope gets: the
 `USE TOUCH MODE` button on the permission screen switches to dragging anywhere
 on the screen, with no change to the visuals.
+
+### Deployment
+
+`.github/workflows/pages.yml` publishes the repository root to GitHub Pages on
+every push to the game branch. There is no build step — the root already is the
+site. `configure-pages` runs with `enablement: true`, so a fresh clone of this
+repository can turn Pages on by itself without anyone visiting repository
+settings.
 
 ### Install as a PWA
 

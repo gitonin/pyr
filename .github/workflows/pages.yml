@@ -1,0 +1,49 @@
+name: Deploy to GitHub Pages
+
+# The game is a static site: the repository root is published as-is. No build
+# step is needed — Three.js is vendored and every sound is synthesised at
+# runtime, so there is nothing to compile or fetch.
+
+on:
+  push:
+    branches: [claude/you-man-mobile-game-v3vwvi]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # enablement:true turns Pages on and switches its source to Actions, so
+      # the site does not need to be configured by hand in repository settings.
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      # Without this, Pages runs the tree through Jekyll, which would ignore
+      # any path starting with an underscore.
+      - name: Disable Jekyll processing
+        run: touch .nojekyll
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

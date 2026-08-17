@@ -9,7 +9,8 @@
     "dev": "node tools/serve.mjs",
     "dev:https": "node tools/serve.mjs --https",
     "icons": "node tools/gen-icons.mjs",
-    "smoke": "node tools/smoke-test.mjs"
+    "smoke": "node tools/smoke-test.mjs",
+    "build:single": "node tools/build-single.mjs dist/you-man.html"
   },
   "devDependencies": {
     "playwright": "^1.49.0"

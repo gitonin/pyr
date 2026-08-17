@@ -263,8 +263,14 @@ score persisted. Any console error fails the run. A second pass opens a real
 detector fires and releases cleanly.
 
 ```bash
-npm run icons    # regenerate the PWA PNGs after editing assets/icons/icon.svg
+npm run icons          # regenerate the PWA PNGs after editing assets/icons/icon.svg
+npm run build:single   # bundle everything into one self-contained HTML file
 ```
+
+`build:single` inlines Three.js, every module and the stylesheet into a single
+~800 KB document that runs with no server and no network access — useful for
+sandboxed hosts, or just to hand someone one file. Add `--fragment` to omit the
+`<html>`/`<head>`/`<body>` skeleton for hosts that supply their own.
 
 ---
 

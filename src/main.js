@@ -99,6 +99,8 @@ class Game {
   }
 
   _registerServiceWorker() {
+    // The single-file build has no separate sw.js to point at.
+    if (window.YOUMAN_SINGLE_FILE) return;
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
     navigator.serviceWorker
       .register(new URL('../sw.js', import.meta.url), { scope: './' })

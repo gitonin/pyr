@@ -1,0 +1,20 @@
+{
+  "name": "you-man",
+  "version": "1.0.0",
+  "description": "YOU MAN — a 3D mobile balance game driven by gyroscope, touch and breath.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "dev": "node tools/serve.mjs",
+    "dev:https": "node tools/serve.mjs --https",
+    "icons": "node tools/gen-icons.mjs",
+    "smoke": "node tools/smoke-test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

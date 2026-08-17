@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#03070f" />
+<meta name="description" content="YOU MAN — a 3D mobile balance game. Tilt, tap and breathe to keep the pyramids aligned." />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="YOU MAN" />
+<title>YOU MAN — Find your balance</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+<link rel="stylesheet" href="./styles/main.css" />
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<!-- Full-screen vignette + scanline treatment, purely decorative -->
+<div class="atmosphere" aria-hidden="true">
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="danger-flash" id="dangerFlash"></div>
+</div>
+
+<main id="ui" class="ui">
+
+  <!-- ================= LOADING ================= -->
+  <section class="screen is-active" data-screen="loading">
+    <div class="stack center">
+      <h1 class="logo small">YOU&nbsp;MAN</h1>
+      <div class="loader"><span></span></div>
+      <p class="micro" data-i18n="loading">LOADING</p>
+    </div>
+  </section>
+
+  <!-- ================= INTRO ================= -->
+  <section class="screen" data-screen="intro">
+    <div class="stack center intro-stack">
+      <h1 class="logo">YOU&nbsp;MAN</h1>
+      <p class="tagline" data-i18n="app.tagline">Find your balance.</p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnStart" data-i18n="btn.start">START</button>
+      <button class="btn btn-ghost" id="btnHowTo" data-i18n="btn.howto">HOW TO PLAY</button>
+      <div class="row">
+        <button class="chip" id="btnSound" data-i18n-aria="btn.sound">
+          <span class="chip-label" data-i18n="btn.sound">SOUND</span>
+          <span class="chip-value" id="soundValue">ON</span>
+        </button>
+        <button class="chip" id="btnLang" data-i18n-aria="btn.language">
+          <span class="chip-label" data-i18n="btn.language">LANGUAGE</span>
+          <span class="chip-value" id="langValue">EN</span>
+        </button>
+        <button class="chip" id="btnSettings" data-i18n-aria="btn.settings">
+          <span class="chip-label" data-i18n="btn.settings">SETTINGS</span>
+          <span class="chip-value">▣</span>
+        </button>
+      </div>
+      <p class="micro best" id="introBest"></p>
+    </div>
+  </section>
+
+  <!-- ================= HOW TO PLAY ================= -->
+  <section class="screen" data-screen="howto">
+    <div class="stack center">
+      <h2 class="title" data-i18n="howto.title">TILT TO BALANCE</h2>
+
+      <div class="phone-demo" aria-hidden="true">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="mini-hourglass">
+              <span class="mini-top"></span>
+              <span class="mini-bottom"></span>
+            </div>
+          </div>
+        </div>
+        <span class="arrow arrow-left">◀</span>
+        <span class="arrow arrow-right">▶</span>
+        <span class="arrow arrow-up">▲</span>
+        <span class="arrow arrow-down">▼</span>
+      </div>
+
+      <div class="axis-legend">
+        <span data-i18n="howto.left">LEFT</span>
+        <span data-i18n="howto.right">RIGHT</span>
+        <span data-i18n="howto.forward">FORWARD</span>
+        <span data-i18n="howto.back">BACK</span>
+      </div>
+
+      <p class="body" data-i18n="howto.line1"></p>
+      <p class="body dim" data-i18n="howto.line2"></p>
+      <p class="micro dim desktop-only" data-i18n="howto.desktop"></p>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnToCalibrate" data-i18n="btn.calibrate">CALIBRATE GYROSCOPE</button>
+      <button class="btn btn-ghost" id="btnHowToBack" data-i18n="btn.menu">MAIN MENU</button>
+    </div>
+  </section>
+
+  <!-- ================= MOTION PERMISSION ================= -->
+  <section class="screen" data-screen="permission">
+    <div class="stack center">
+      <h2 class="title" data-i18n="perm.title">MOTION SENSORS</h2>
+      <p class="body" data-i18n="perm.body"></p>
+      <p class="body warn" id="permNote" hidden></p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnGrantMotion" data-i18n="perm.grant">ENABLE MOTION</button>
+      <button class="btn btn-ghost" id="btnTouchMode" data-i18n="btn.touchMode">USE TOUCH MODE</button>
+    </div>
+  </section>
+
+  <!-- ================= CALIBRATION ================= -->
+  <section class="screen" data-screen="calibrate">
+    <div class="stack center">
+      <h2 class="title" data-i18n="calib.title">CALIBRATION</h2>
+      <p class="body" id="calibInstruction" data-i18n="calib.instruction"></p>
+
+      <div class="calib-ring" id="calibRing" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="calib-level"><span id="calibPercent">0%</span></div>
+        <div class="bubble" id="calibBubble"></div>
+      </div>
+
+      <div class="meter">
+        <span class="meter-label" data-i18n="calib.progress">STABILITY</span>
+        <div class="meter-track"><div class="meter-fill" id="calibMeter"></div></div>
+      </div>
+
+      <p class="micro ok" id="calibDone" hidden data-i18n="calib.done"></p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnCalibrate" data-i18n="btn.calibrate">CALIBRATE GYROSCOPE</button>
+      <button class="btn btn-ghost" id="btnCalibContinue" data-i18n="btn.continue" disabled>CONTINUE</button>
+    </div>
+  </section>
+
+  <!-- ================= MIC PERMISSION ================= -->
+  <section class="screen" data-screen="micPermission">
+    <div class="stack center">
+      <h2 class="title" data-i18n="mic.title">MICROPHONE</h2>
+      <p class="body" data-i18n="mic.body"></p>
+      <p class="body warn" id="micNote" hidden></p>
+      <div class="mic-viz" id="micViz" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnAllowMic" data-i18n="btn.allowMic">ALLOW MICROPHONE</button>
+      <button class="btn btn-ghost" id="btnSkipMic" data-i18n="btn.skipMic">CONTINUE WITHOUT MIC</button>
+    </div>
+  </section>
+
+  <!-- ================= COUNTDOWN ================= -->
+  <section class="screen overlay" data-screen="countdown">
+    <div class="countdown" id="countdownValue">3</div>
+    <p class="micro brief" id="countdownBrief"></p>
+  </section>
+
+  <!-- ================= PLAYING (transparent: gameplay owns the canvas) ===== -->
+  <section class="screen overlay" data-screen="playing"></section>
+
+  <!-- ================= HUD ================= -->
+  <div class="hud" id="hud" hidden>
+    <div class="hud-top">
+      <div class="hud-cell">
+        <span class="hud-label" data-i18n="hud.level">LEVEL</span>
+        <span class="hud-value" id="hudLevel">1</span>
+      </div>
+      <div class="hud-cell hud-center">
+        <span class="hud-label" data-i18n="hud.score">SCORE</span>
+        <span class="hud-value big" id="hudScore">000000</span>
+        <span class="hud-mult" id="hudMult"></span>
+      </div>
+      <button class="hud-pause" id="btnPause" aria-label="Pause">
+        <span></span><span></span>
+      </button>
+    </div>
+
+    <div class="hud-sand">
+      <div class="sand-track"><div class="sand-fill" id="sandFill"></div></div>
+      <span class="hud-label" data-i18n="hud.sand">SAND</span>
+    </div>
+
+    <div class="hud-stability">
+      <div class="stab-track"><div class="stab-fill" id="stabFill"></div></div>
+      <span class="hud-label" data-i18n="hud.stability">STABILITY</span>
+    </div>
+
+    <div class="hud-extra" id="hudExtra"></div>
+
+    <!-- Level 3 breath meter -->
+    <div class="breath" id="breathMeter" hidden>
+      <span class="breath-label" data-i18n="mic.blow">BLOW</span>
+      <div class="breath-track"><div class="breath-fill" id="breathFill"></div></div>
+      <span class="micro dim" id="breathHint"></span>
+    </div>
+
+    <!-- Balance reticle drawn over the contact point -->
+    <div class="reticle" id="reticle" aria-hidden="true">
+      <div class="reticle-ring"></div>
+      <div class="reticle-dot" id="reticleDot"></div>
+    </div>
+  </div>
+
+  <!-- ================= PAUSE ================= -->
+  <section class="screen dialog" data-screen="paused">
+    <div class="stack center panel">
+      <h2 class="title" data-i18n="pause.title">PAUSED</h2>
+      <button class="btn btn-primary" id="btnResume" data-i18n="btn.resume">RESUME</button>
+      <button class="btn btn-ghost" id="btnPauseSettings" data-i18n="btn.settings">SETTINGS</button>
+      <button class="btn btn-ghost" id="btnPauseRestart" data-i18n="btn.restartLevel">RESTART LEVEL</button>
+      <button class="btn btn-ghost" id="btnPauseMenu" data-i18n="btn.menu">MAIN MENU</button>
+    </div>
+  </section>
+
+  <!-- ================= LEVEL COMPLETE ================= -->
+  <section class="screen" data-screen="levelComplete">
+    <div class="stack center">
+      <p class="eyebrow" id="completeTitle">LEVEL 1 COMPLETE</p>
+      <h2 class="title glow" data-i18n="level.achieved">Balance achieved.</h2>
+      <dl class="stats" id="completeStats"></dl>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnNextLevel" data-i18n="btn.next">NEXT LEVEL</button>
+      <button class="btn btn-ghost" id="btnCompleteMenu" data-i18n="btn.menu">MAIN MENU</button>
+    </div>
+  </section>
+
+  <!-- ================= GAME OVER ================= -->
+  <section class="screen" data-screen="gameOver">
+    <div class="stack center">
+      <p class="eyebrow danger" data-i18n="fail.title">LOST BALANCE</p>
+      <h2 class="title" data-i18n="fail.body">The pyramids fell.</h2>
+      <dl class="stats" id="failStats"></dl>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnRetry" data-i18n="btn.retry">TRY AGAIN</button>
+      <button class="btn btn-ghost" id="btnFailMenu" data-i18n="btn.menu">MAIN MENU</button>
+    </div>
+  </section>
+
+  <!-- ================= FINALE ================= -->
+  <section class="screen" data-screen="finale">
+    <div class="stack center">
+      <h1 class="logo mid">YOU&nbsp;MAN</h1>
+      <p class="tagline" data-i18n="final.body">You found your balance.</p>
+      <p class="rank" id="finalRank">CALM</p>
+      <dl class="stats" id="finalStats"></dl>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnPlayAgain" data-i18n="btn.playAgain">PLAY AGAIN</button>
+      <button class="btn btn-ghost" id="btnShare" data-i18n="btn.share">SHARE SCORE</button>
+      <div class="row">
+        <button class="chip" id="btnFinalMenu"><span class="chip-label" data-i18n="btn.menu">MAIN MENU</span></button>
+        <button class="chip" id="btnFinalSound"><span class="chip-label" data-i18n="btn.sound">SOUND</span><span class="chip-value" id="finalSoundValue">ON</span></button>
+      </div>
+      <p class="micro ok" id="shareToast" hidden data-i18n="share.copied"></p>
+    </div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="screen dialog" data-screen="settings">
+    <div class="stack panel settings-panel">
+      <h2 class="title" data-i18n="settings.title">SETTINGS</h2>
+
+      <label class="setting">
+        <span data-i18n="settings.music">MUSIC VOLUME</span>
+        <input type="range" id="setMusic" min="0" max="1" step="0.05" />
+      </label>
+      <label class="setting">
+        <span data-i18n="settings.sfx">EFFECTS VOLUME</span>
+        <input type="range" id="setSfx" min="0" max="1" step="0.05" />
+      </label>
+      <label class="setting">
+        <span data-i18n="settings.haptics">VIBRATION</span>
+        <input type="range" id="setHaptics" min="0" max="1" step="0.1" />
+      </label>
+      <label class="setting">
+        <span data-i18n="settings.sensitivity">GYRO SENSITIVITY</span>
+        <input type="range" id="setSensitivity" min="0.4" max="2" step="0.05" />
+      </label>
+
+      <div class="setting">
+        <span data-i18n="settings.quality">GRAPHICS QUALITY</span>
+        <div class="seg" id="setQuality">
+          <button data-value="auto" data-i18n="quality.auto">AUTO</button>
+          <button data-value="low" data-i18n="quality.low">LOW</button>
+          <button data-value="medium" data-i18n="quality.medium">MEDIUM</button>
+          <button data-value="high" data-i18n="quality.high">HIGH</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <span data-i18n="settings.contrast">HIGH CONTRAST</span>
+        <div class="seg" id="setContrast">
+          <button data-value="off" data-i18n="off">OFF</button>
+          <button data-value="on" data-i18n="on">ON</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <span data-i18n="settings.language">LANGUAGE</span>
+        <div class="seg" id="setLanguage">
+          <button data-value="en">EN</button>
+          <button data-value="fr">FR</button>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnSettingsClose" data-i18n="btn.close">CLOSE</button>
+    </div>
+  </section>
+
+  <!-- ================= FATAL ERROR ================= -->
+  <section class="screen" data-screen="error">
+    <div class="stack center">
+      <h2 class="title danger">⚠</h2>
+      <p class="body" id="errorText"></p>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
